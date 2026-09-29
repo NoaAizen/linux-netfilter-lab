@@ -1,7 +1,3 @@
-Here's a `README` for your current Netfilter kernel module, following the same structure as your previous program:
-
----
-
 # README
 
 ## Netfilter Kernel Module
@@ -15,7 +11,7 @@ This is a simple Linux kernel module that demonstrates the use of the Netfilter 
 ### Output
 
 - **When a packet is intercepted**: `"Netfilter Module: Packet intercepted."`
-- **When the module is loaded**: `"Netfilter Module: Loaded and hook registered."`
+- **When the module is loaded**: `"Netfilter Module: Loaded and hook registered"`
 - **When the module is unloaded**: `"Netfilter Module: Unloaded and hook unregistered."`
 
 ## How to Use
@@ -71,7 +67,7 @@ You should see the following messages:
 - **After loading the module**:
 
   ```
-  Netfilter Module: Loaded and hook registered.
+  Netfilter Module: Loaded and hook registered
   ```
 
 - **When a packet is intercepted** (this will appear multiple times if packets are intercepted):

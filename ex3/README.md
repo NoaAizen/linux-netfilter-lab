@@ -2,7 +2,7 @@
 
 ## Netfilter Kernel Module for Packet Inspection
 
-This is a simple Linux kernel module that uses the Netfilter framework to intercept IPv4 packets and log their source and destination IP addresses to the kernel log. The module filters out packets originating from loopback addresses (`127.x.x.x`). It logs a message each time a qualifying packet is intercepted, as well as when the module is loaded or unloaded.
+This is a simple Linux kernel module that uses the Netfilter framework to intercept IPv4 packets and log their source and destination IP addresses to the kernel log. Packets whose source address is in the loopback range (`127.x.x.x`) are not logged. All packets are accepted (`NF_ACCEPT`); the module does not block or drop traffic. It logs a message each time a qualifying packet is intercepted, as well as when the module is loaded or unloaded.
 
 ### Input
 
@@ -114,4 +114,4 @@ You should see messages similar to:
 
 ## Important Notes
 
-- **Filtering Logic**: The module currently filters out packets originating from loopback addresses (`127.x.x.x`).
+- **Log filtering only**: Packets from loopback source addresses (`127.x.x.x`) are excluded from logging. They are still accepted; no packets are dropped.
