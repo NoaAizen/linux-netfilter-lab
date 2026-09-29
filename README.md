@@ -6,14 +6,14 @@ The four exercises build on each other, starting with a minimal loadable kernel 
 
 | Exercise | Topic | Module |
 |---|---|---|
-| [ex1](ex1/) | Basic Linux kernel module | `basic_module.ko` |
-| [ex2](ex2/) | Netfilter `PRE_ROUTING` hook | `netfilter_module.ko` |
-| [ex3](ex3/) | IPv4 packet inspection | `netfilter_module.ko` |
-| [ex4](ex4/) | Per-source-IP rate limiting | `netfilter_module.ko` |
+| [basic-kernel-module](basic-kernel-module/) | Basic Linux kernel module | `basic_module.ko` |
+| [netfilter-hook](netfilter-hook/) | Netfilter `PRE_ROUTING` hook | `netfilter_module.ko` |
+| [ipv4-packet-inspection](ipv4-packet-inspection/) | IPv4 packet inspection | `netfilter_module.ko` |
+| [ip-rate-limiter](ip-rate-limiter/) | Per-source-IP rate limiting | `netfilter_module.ko` |
 
 ## Exercises
 
-### ex1: Basic Linux kernel module
+### basic-kernel-module: Basic Linux kernel module
 
 A minimal loadable kernel module showing the module lifecycle:
 
@@ -23,7 +23,7 @@ A minimal loadable kernel module showing the module lifecycle:
 
 It logs `Hello, Check Point!` on load and `Goodbye, Check Point!` on unload.
 
-### ex2: Netfilter PRE_ROUTING hook
+### netfilter-hook: Netfilter PRE_ROUTING hook
 
 Registers a hook with the Netfilter framework:
 
@@ -33,9 +33,9 @@ Registers a hook with the Netfilter framework:
 
 The hook only observes traffic. Every packet is accepted.
 
-### ex3: IPv4 packet inspection
+### ipv4-packet-inspection: IPv4 packet inspection
 
-Extends the ex2 hook to read the IPv4 header:
+Extends the netfilter-hook module to read the IPv4 header:
 
 - Checks `skb->protocol` for `ETH_P_IP`
 - Reads the header with `ip_hdr(skb)`
@@ -44,7 +44,7 @@ Extends the ex2 hook to read the IPv4 header:
 
 All packets are still accepted. The loopback check only affects logging.
 
-### ex4: Per-source-IP rate limiting
+### ip-rate-limiter: Per-source-IP rate limiting
 
 A Netfilter `PRE_ROUTING` hook that tracks IPv4 source addresses and drops traffic from sources that exceed a packet budget.
 
@@ -58,25 +58,25 @@ A Netfilter `PRE_ROUTING` hook that tracks IPv4 source addresses and drops traff
 - **NF_ACCEPT/NF_DROP:** packets within the budget return `NF_ACCEPT`. Packets beyond it return `NF_DROP` and are logged. If an entry can't be allocated, the packet is accepted.
 - **Limit:** 100 packets per source IP per 10-second fixed window (`MAX_PACKETS_PER_IP`, `TIME_WINDOW_SECS`). When the window expires, the count resets.
 
-`ex4/test_rate_limit.sh` loads the module, sends 200 pings to `127.0.0.1`, prints matching kernel log lines and unloads the module.
+`ip-rate-limiter/test_rate_limit.sh` loads the module, sends 200 pings to `127.0.0.1`, prints matching kernel log lines and unloads the module.
 
 ## Building and running
 
 These are out-of-tree modules. You need a Linux system with headers for the running kernel (for example `linux-headers-$(uname -r)` on Debian/Ubuntu).
 
 ```bash
-cd ex2            # or ex1, ex3, ex4
-make              # builds the .ko against /lib/modules/$(uname -r)/build
-sudo insmod netfilter_module.ko     # ex1: basic_module.ko
+cd netfilter-hook   # or basic-kernel-module, ipv4-packet-inspection, ip-rate-limiter
+make                # builds the .ko against /lib/modules/$(uname -r)/build
+sudo insmod netfilter_module.ko     # basic-kernel-module: basic_module.ko
 sudo dmesg | tail
-sudo rmmod netfilter_module         # ex1: basic_module
+sudo rmmod netfilter_module         # basic-kernel-module: basic_module
 make clean
 ```
 
-To run the ex4 test script, build ex4 first, then run it from inside `ex4/`:
+To run the rate limiter test script, build the module first, then run it from inside `ip-rate-limiter/`:
 
 ```bash
-cd ex4
+cd ip-rate-limiter
 make
 chmod +x test_rate_limit.sh
 ./test_rate_limit.sh
@@ -87,10 +87,10 @@ Loading kernel modules needs root and affects the whole host's networking. Use a
 ## Repository layout
 
 ```
-ex1/  basic_module.c, Makefile, Readme.md
-ex2/  netfilter_module.c, Makefile, README.md
-ex3/  netfilter_module.c, Makefile, README.md
-ex4/  netfilter_module.c, Makefile, test_rate_limit.sh
+basic-kernel-module/     basic_module.c, Makefile, Readme.md
+netfilter-hook/          netfilter_module.c, Makefile, README.md
+ipv4-packet-inspection/  netfilter_module.c, Makefile, README.md
+ip-rate-limiter/         netfilter_module.c, Makefile, test_rate_limit.sh
 ```
 
 ## Limitations
@@ -98,9 +98,9 @@ ex4/  netfilter_module.c, Makefile, test_rate_limit.sh
 These modules are coursework, not a finished product.
 
 - **Educational prototype:** the code shows kernel and Netfilter concepts and is not hardened.
-- **No synchronization around the shared hash table (ex4):** the hook can run on several CPUs at once, but lookups, inserts and counter updates are not protected by a lock or RCU.
-- **Entries stay allocated until module unload (ex4):** nothing expires or evicts entries, so memory grows with the number of distinct source addresses seen.
-- **Simplified logging and rate-limiting design:** ex4 uses a fixed-window counter keyed only by source address. Logging is plain per-packet `printk` with no rate limit, and return values such as `nf_register_net_hook`'s are not checked.
+- **No synchronization around the shared hash table (ip-rate-limiter):** the hook can run on several CPUs at once, but lookups, inserts and counter updates are not protected by a lock or RCU.
+- **Entries stay allocated until module unload (ip-rate-limiter):** nothing expires or evicts entries, so memory grows with the number of distinct source addresses seen.
+- **Simplified logging and rate-limiting design:** the rate limiter uses a fixed-window counter keyed only by source address. Logging is plain per-packet `printk` with no rate limit, and return values such as `nf_register_net_hook`'s are not checked.
 - **Not production firewall software:** don't use it to protect real systems. Use `nftables`/`iptables` or another maintained firewall instead.
 
 ## Attribution
